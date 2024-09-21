@@ -1,0 +1,17 @@
+# Python virtual environment
+.venv/
+
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+
+# Local configuration files
+*.env
+
+# Excel files (if you want to exclude them)
+
+# Logs
+*.log
+
+# Vercel cache (if applicable)
+.vercel/
