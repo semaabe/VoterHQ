@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Vote HQ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Add Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+
+            <img src="{{ url_for('static', filename='SmartVote.jpeg') }}" alt="Smart Vote Logo" class="logo">
+            <h1>Smart Vote HQ</h1>
+            <p1>Use these filters to find your perfect candidate!</p1>
+
+        </div>
+    </header>
+    
+    <div class="filter-container">
+    <label for="party">Party:</label>
+    <select id="party">
+        <option value="">Don't Care</option>
+        <option value="Democrat">Democrat</option>
+        <option value="Republican">Republican</option>
+        <option value="Independent">Independent</option>
+    </select>
+    <label for="state">State:</label>
+<select id="state">
+    <option value="">Don't Care</option>
+    <option value="Alabama">Alabama</option>
+    <option value="Alaska">Alaska</option>
+    <option value="Arizona">Arizona</option>
+    <option value="Arkansas">Arkansas</option>
+    <option value="California">California</option>
+    <option value="Colorado">Colorado</option>
+    <option value="Connecticut">Connecticut</option>
+    <option value="Delaware">Delaware</option>
+    <option value="Florida">Florida</option>
+    <option value="Georgia">Georgia</option>
+    <option value="Hawaii">Hawaii</option>
+    <option value="Idaho">Idaho</option>
+    <option value="Illinois">Illinois</option>
+    <option value="Indiana">Indiana</option>
+    <option value="Iowa">Iowa</option>
+    <option value="Kansas">Kansas</option>
+    <option value="Kentucky">Kentucky</option>
+    <option value="Louisiana">Louisiana</option>
+    <option value="Maine">Maine</option>
+    <option value="Maryland">Maryland</option>
+    <option value="Massachusetts">Massachusetts</option>
+    <option value="Michigan">Michigan</option>
+    <option value="Minnesota">Minnesota</option>
+    <option value="Mississippi">Mississippi</option>
+    <option value="Missouri">Missouri</option>
+    <option value="Montana">Montana</option>
+    <option value="Nebraska">Nebraska</option>
+    <option value="Nevada">Nevada</option>
+    <option value="New Hampshire">New Hampshire</option>
+    <option value="New Jersey">New Jersey</option>
+    <option value="New Mexico">New Mexico</option>
+    <option value="New York">New York</option>
+    <option value="North Carolina">North Carolina</option>
+    <option value="North Dakota">North Dakota</option>
+    <option value="Ohio">Ohio</option>
+    <option value="Oklahoma">Oklahoma</option>
+    <option value="Oregon">Oregon</option>
+    <option value="Pennsylvania">Pennsylvania</option>
+    <option value="Rhode Island">Rhode Island</option>
+    <option value="South Carolina">South Carolina</option>
+    <option value="South Dakota">South Dakota</option>
+    <option value="Tennessee">Tennessee</option>
+    <option value="Texas">Texas</option>
+    <option value="Utah">Utah</option>
+    <option value="Vermont">Vermont</option>
+    <option value="Virginia">Virginia</option>
+    <option value="Washington">Washington</option>
+    <option value="West Virginia">West Virginia</option>
+    <option value="Wisconsin">Wisconsin</option>
+    <option value="Wyoming">Wyoming</option>
+</select>
+<label for="min-age">Min Age:</label>
+<input type="number" id="min-age" placeholder="Min Age">
+
+<label for="max-age">Max Age:</label>
+<input type="number" id="max-age" placeholder="Max Age">
+<label for="former-position">Former Position:</label>
+<select id="former-position">
+    <option value="" {% if not former_position %} selected {% endif %}>Don't Care</option>
+    {% for former_position in former_position %}
+    <option value="{{ former_position }}" {% if former_position == former_position %} selected {% endif %}>{{ former_position }}</option>
+    {% endfor %}
+</select>
+<label for="current-position">Current Position:</label>
+<select id="current-position">
+    <option value="" {% if not current_position %} selected {% endif %}>Don't Care</option>
+    {% for position in current_positions %}
+    <option value="{{ position }}" {% if position == current_position %} selected {% endif %}>{{ position }}</option>
+    {% endfor %}
+</select>
+
+<label for="college">College:</label>
+<select id="college">
+    <option value="" {% if not selected_college %} selected {% endif %}>Don't Care</option>
+    {% for college in available_colleges %}
+    <option value="{{ college }}" {% if college == selected_college %} selected {% endif %}>{{ college }}</option>
+    {% endfor %}
+</select>
+
+
+<button id="load-candidates-btn" onclick="loadCandidates()">Load Candidates</button>
+    <ul id="candidate-list"></ul>
+</div>
+<!-- Swiper Container -->
+<div class="swiper-container">
+    <!-- Swiper Wrapper -->
+    <div class="swiper-wrapper" id="candidate-cards">
+        <!-- Swiper slides will be dynamically inserted here -->
+    </div>
+
+    
+</div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+    <!-- Include your JavaScript code here -->
+    <script>
+    const filters = document.querySelectorAll('#party, #state');
+    const collegeDropdown = document.getElementById('college');
+    const formerDropdown = document.getElementById('former-position');
+    const loadButton = document.getElementById('load-candidates-btn');
+    // Function to check if any filter has a value
+    // function checkFilters() {
+    //     let hasValue = false;
+    //     filters.forEach(filter => {
+    //         if (filter.value) {
+    //             hasValue = true;
+    //         }
+    //     });
+
+    //     // Enable or disable the button based on filter values
+    //     loadButton.disabled = !hasValue;
+    // }
+
+    // Add event listeners to all filter inputs to check whenever a filter changes
+    // filters.forEach(filter => {
+    //     filter.addEventListener('input', checkFilters);
+    // });
+    async function updateOptions() {
+    const party = document.getElementById('party').value;
+    const state = document.getElementById('state').value;
+    const minAge = document.getElementById('min-age').value;
+    const maxAge = document.getElementById('max-age').value;
+
+    // Store the currently selected values
+    const selectedCollege = collegeDropdown.value;
+    const selectedFormer = formerDropdown.value;
+    const selectedCurrent = document.getElementById('current-position').value;
+
+    const url = new URL('/update_options', window.location.origin);
+    if (party) url.searchParams.append('party', party);
+    if (state) url.searchParams.append('state', state);
+    if (minAge) url.searchParams.append('min_age', minAge);
+    if (maxAge) url.searchParams.append('max_age', maxAge);
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Update the College dropdown without clearing the element
+        updateDropdown(collegeDropdown, data.available_colleges, selectedCollege);
+
+        // Update the Former Position dropdown without clearing the element
+        updateDropdown(formerDropdown, data.available_formers, selectedFormer);
+
+        // Update the Current Position dropdown without clearing the element
+        const currentDropdown = document.getElementById('current-position');
+        updateDropdown(currentDropdown, data.available_positions, selectedCurrent);
+    } catch (error) {
+        console.error("Error updating options:", error);
+    }
+}
+
+function updateDropdown(dropdown, newOptions, selectedValue) {
+    const currentOptions = Array.from(dropdown.options).map(option => option.value);
+
+    // Only update if the options are different
+    if (JSON.stringify(currentOptions) !== JSON.stringify(newOptions)) {
+        // Clear the existing options (if necessary)
+        dropdown.innerHTML = `<option value="">Don't Care</option>`;
+
+        // Populate with new options
+        newOptions.forEach(optionValue => {
+            const option = document.createElement('option');
+            option.value = optionValue;
+            option.textContent = optionValue;
+            dropdown.appendChild(option);
+        });
+
+        // Restore the previously selected value if it still exists
+        if (selectedValue && newOptions.includes(selectedValue)) {
+            dropdown.value = selectedValue;
+        }
+    }
+}
+
+// Attach the onchange event listeners (instead of oninput)
+document.getElementById('party').addEventListener('change', updateOptions);
+document.getElementById('state').addEventListener('change', updateOptions);
+document.getElementById('min-age').addEventListener('change', updateOptions);
+document.getElementById('max-age').addEventListener('change', updateOptions);
+document.getElementById('former-position').addEventListener('change', updateOptions);
+document.getElementById('current-position').addEventListener('change', updateOptions);
+document.getElementById('college').addEventListener('change', updateOptions);
+
+
+    async function loadCandidates() {
+    const party = document.getElementById('party').value;
+    const state = document.getElementById('state').value;
+    const minAge = document.getElementById('min-age').value;
+    const maxAge = document.getElementById('max-age').value;
+    const formerPosition = document.getElementById('former-position').value;
+    const currentPosition = document.getElementById('current-position').value;
+    const college = document.getElementById('college').value;
+
+    // Construct the query parameters
+    let query = {};
+    if (party) query.party = party;
+    if (state) query.state = state;
+    if (minAge) query.min_age = minAge;
+    if (maxAge) query.max_age = maxAge;
+    if (formerPosition) query.former_position = formerPosition;
+    if (currentPosition) query.current_position = currentPosition;
+    if (college) query.college = college;
+
+    // Redirect the user to the match page with filtered candidates
+    const url = new URL('/candidates', window.location.origin);
+    Object.keys(query).forEach(key => {
+        if (query[key]) url.searchParams.append(key, query[key]);
+    });
+    window.location.href = url;
+}
+    </script>
+</body>
+</html>

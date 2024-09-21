@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Match</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" />
+    <style>
+        .tinder-container {
+            width: 100%;
+            height: 80vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            flex-direction: column; /* Stack vertically */
+        }
+
+        .tinder-card {
+            position: absolute;
+            width: 350px;
+            height: 450px;
+            background: #ffffff;
+            box-shadow: 0px 15px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .tinder-card:hover {
+            transform: scale(1.05);
+        }
+
+        .no-more-candidates {
+            text-align: center;
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px; /* Adds space between buttons */
+            margin-top: 20px;
+        }
+
+        .actions button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            width: 150px; /* Set width for buttons */
+        }
+
+        .actions button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Add transition animation for Tinder swipe effect */
+        .tinder-card.swipe-left {
+            transform: translateX(-100%) rotate(-20deg);
+        }
+
+        .tinder-card.swipe-right {
+            transform: translateX(100%) rotate(20deg);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1>Your Matches!</h1>
+            <img src="{{ url_for('static', filename='SmartVote.jpeg') }}" alt="Smart Vote Logo" class="logo">
+        </div>
+    </header>
+
+    <div class="tinder-container" id="tinder-container">
+        <!-- Tinder cards will be generated here -->
+    </div>
+
+    <!-- Center the actions container -->
+    <div class="actions">
+        <button id="dislike">Dislike</button>
+        <button id="like">Like</button>
+    </div>
+    
+    <div class="actions">
+        <button id="finish-swiping">Finish Swiping</button>
+        <a href="/"><button>Back to Home</button></a>
+    </div>
+    
+
+
+    <script>
+    document.getElementById('finish-swiping').addEventListener('click', () => {
+    const url = new URL('/final_match', window.location.origin);
+    // Append liked candidates to the URL as JSON
+    url.searchParams.append('liked_candidates', JSON.stringify(likedCandidates));
+    window.location.href = url;
+});
+        // Ensure the candidates variable is correctly parsed
+        const candidates = JSON.parse('{{ candidates | tojson | safe }}');
+        let currentCandidateIndex = 0;
+        let likedCandidates = [];
+
+        function loadCandidate(candidate) {
+            const tinderContainer = document.getElementById('tinder-container');
+            tinderContainer.innerHTML = '';
+
+            const card = document.createElement('div');
+            card.classList.add('tinder-card');
+            card.innerHTML = `
+                <div>
+                    <h2>${candidate.Name || "No name available"}</h2>
+                    <p>Age: ${candidate.Age || "Unknown"}</p>
+                    <p>Party: ${candidate['Political Party'] || "Unknown"}</p>
+                    <p>State: ${candidate.State || "Unknown"}</p>
+                    <p>Former Position: ${candidate.Former || "Unknown"}</p>
+                    <p>Current Position: ${candidate.Current || "Unknown"}</p>
+                    <p>College: ${candidate.College || "Unknown"}</p>
+                </div>`;
+            tinderContainer.appendChild(card);
+        }
+
+        function handleLikeDislike(liked) {
+            if (liked) {
+            // Add the current candidate to likedCandidates
+            likedCandidates.push(candidates[currentCandidateIndex]);
+        }
+            if (currentCandidateIndex < candidates.length - 1) {
+                currentCandidateIndex++;
+                loadCandidate(candidates[currentCandidateIndex]);
+            } else {
+                document.getElementById('tinder-container').innerHTML = `
+                    <div class="no-more-candidates">
+                        No more candidates available.
+                    </div>`;
+            }
+        }
+        function showLikedCandidates() {
+        // Redirect the user to the final match page
+        const url = new URL('/final-match', window.location.origin);
+        url.searchParams.append('liked_candidates', JSON.stringify(likedCandidates));
+        window.location.href = url;
+    }
+
+        document.getElementById('like').addEventListener('click', () => handleLikeDislike(true));
+        document.getElementById('dislike').addEventListener('click', () => handleLikeDislike(false));
+
+        // Load the first candidate when the page loads
+        if (candidates && candidates.length > 0) {
+            loadCandidate(candidates[currentCandidateIndex]);
+        } else {
+            document.getElementById('tinder-container').innerHTML = `
+                 <div class="no-candidates-found">
+                <h2>Finding the perfect match is hard!</h2>
+                <h2>Try again to find the candidate right for you!</h2>
+            </div>`;
+        }
+        function chooseFinalMatch(index) {
+        // Add code here to save the selected candidate if needed
+        console.log('Chosen candidate index:', index);
+    }
+    </script>
+</body>
+</html>
+

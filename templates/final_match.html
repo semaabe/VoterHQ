@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ 
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <header>
+        <div class="header-container">
+            <img src="{{ url_for('static', filename='SmartVote.jpeg') }}" alt="Smart Vote Logo" class="logo">
+            <h1>Final Matches!</h1>
+        </div>
+    </header>
+</head>
+<body>
+    <!-- Check if there are liked candidates -->
+    <div id="final_matches">
+        {% if liked_candidates %}
+            <ul>
+                {% for candidate in liked_candidates %}
+                    <li>
+                        <strong>{{ candidate.Name or "No name available" }}</strong><br>
+                        Age: {{ candidate.Age or "Unknown" }}<br>
+                        Party: {{ candidate['Political Party'] or "Unknown" }}<br>
+                        State: {{ candidate.State or "Unknown" }}<br>
+                        Former Position: {{ candidate.Former or "Unknown" }}<br>
+                        Current Position: {{ candidate.Current or "Unknown" }}<br>
+                        College: {{ candidate.College or "Unknown" }}<br>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No final matches yet.</p>
+        {% endif %}
+    
+    </div>
+    <a href="/"><button>Back to Home</button></a>
+
+   
+    <script>
+        const likedCandidates = JSON.parse('{{ liked_candidates | tojson | safe }}');  // Parse liked candidates
+
+        // Display liked candidates
+        if (likedCandidates.length > 0) {
+            let finalMatchesHtml = '<ul>';
+            likedCandidates.forEach(candidate => {
+                finalMatchesHtml += `
+                    <li>
+                        <strong>${candidate.Name || "No name available"}</strong><br>
+                        Age: ${candidate.Age || "Unknown"}<br>
+                        Party: ${candidate['Political Party'] || "Unknown"}<br>
+                        State: ${candidate.State || "Unknown"}<br>
+                        Former Position: ${candidate.Former || "Unknown"}<br>
+                        Current Position: ${candidate.Current || "Unknown"}<br>
+                        College: ${candidate.College || "Unknown"}<br>
+                    </li>
+                `;
+            });
+            finalMatchesHtml += '</ul>';
+            document.getElementById('final_matches').innerHTML = finalMatchesHtml;
+        } else {
+            document.getElementById('final_matches').innerHTML = `<p>No final matches yet.</p>`;
+        }
+    </script>
+</body>
+</html>
+
