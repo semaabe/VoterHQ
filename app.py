@@ -4,6 +4,8 @@ import numpy as np  # Import numpy to handle NaN values
 import json
 import os
 from datetime import datetime
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 
 app = Flask(__name__)
@@ -52,6 +54,8 @@ def match():
     former_position = request.args.get('former_position')
     current_position = request.args.get("current_position")
     selected_college = request.args.get("college")
+    donated_democrats = request.args.get('donated_democrats')
+    donated_republicans = request.args.get('donated_republicans')
     
     # Filter based on selected criteria
     if selected_party:
@@ -66,6 +70,10 @@ def match():
         candidates_df = candidates_df[candidates_df['Current'] == current_position]
     if selected_college:
         candidates_df = candidates_df[candidates_df['College'] == selected_college]
+    if donated_democrats:
+        candidates_df = candidates_df[candidates_df['To Democrats'] >= float(donated_democrats)]
+    if donated_republicans:
+        candidates_df = candidates_df[candidates_df['To Republicans'] >= float(donated_republicans)]
     
     # Convert to dictionary
     available_positions = candidates_df['Current'].dropna().unique().tolist()
@@ -87,6 +95,9 @@ def update_options_route():
     selected_former_position = request.args.get('former_position')
     selected_current_position = request.args.get('current_position')
     selected_college = request.args.get('college')
+
+    donated_democrats = request.args.get('donated_democrats')
+    donated_republicans = request.args.get('donated_republicans')
 
     # Filter candidates based on current selections
     if selected_party:
@@ -150,6 +161,87 @@ def final_match():
     # Render the final matches page with the liked candidates
     return render_template('final_match.html', liked_candidates=liked_candidates)
 
+cred = credentials.Certificate("smartvote.json")
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
+@app.route('/store_user_data', methods=['POST'])
+def store_user_data():
+    user_data = request.get_json()
+    uid = user_data['uid']  # UID from Firebase Auth
+    age = user_data['age']
+    gender = user_data['gender']
+    race = user_data['race']
+    state = user_data['state']
+    political_party=user_data['political_party']
+    college = user_data['college']
+    final_match = user_data['final_match']
+    
+    doc_ref = db.collection('users').document(uid)
+    doc_ref.set({
+        'age': age,
+        'gender':gender,
+        'race':race,
+        'state': state,
+        'political_party':political_party,
+        'college': college,
+        'final_match': final_match
+        })
+
+    return jsonify({"status": "success"})
+
+@app.route('/similar_matches')
+def similar_matches():
+    uid = session.get('uid')
+
+    if not uid:
+        return redirect(url_for('index'))
+
+    user_ref = db.collection('users').document(uid)
+    user_doc = user_ref.get()
+
+    if not user_doc.exists:
+        return jsonify({"error": "User data not found"}), 404
+
+    user_data = user_doc.to_dict()
+
+    # Query for similar users using keyword arguments
+    query_ref = db.collection('users') \
+        .where('race', '==', user_data['race']) \
+        .where('state', '==', user_data['state']) \
+        .where('college', '==', user_data['college'])
+
+    similar_users = query_ref.stream()
+
+    similar_matches = []
+    for user in similar_users:
+        similar_data = user.to_dict()
+        matches = similar_data.get('final_match', [])  # Ensure this is a list
+        similar_matches.append({
+            'age': similar_data['age'],
+            'gender': similar_data['gender'],
+            'race': similar_data['race'],
+            'state': similar_data['state'],
+            'political_party': similar_data['political_party'],
+            'college': similar_data['college'],
+            'matches': matches  # Store matches here
+        })
+
+    if not similar_matches:
+        return render_template('similar_matches.html', matches=[], message="No matches found for similar demographics.")
+
+    return render_template('similar_matches.html', matches=similar_matches)
+
+@app.route('/set_session_uid', methods=['POST'])
+def set_session_uid():
+    data = request.get_json()
+    uid = data.get('uid')
+
+    if uid:
+        session['uid'] = uid
+        return jsonify({"status": "UID stored in session"}), 200
+    else:
+        return jsonify({"error": "UID not provided"}), 400
 
 
 if __name__ == "__main__":

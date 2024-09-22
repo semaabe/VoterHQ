@@ -12,9 +12,8 @@
 <body>
     <header>
         <div class="header-container">
-
             <img src="{{ url_for('static', filename='SmartVote.jpeg') }}" alt="Smart Vote Logo" class="logo">
-            <h1>Smart Vote HQ</h1>
+
             <p1>Use these filters to find your perfect candidate!</p1>
 
         </div>
@@ -27,8 +26,10 @@
         <option value="Democrat">Democrat</option>
         <option value="Republican">Republican</option>
         <option value="Independent">Independent</option>
+        <option value="Libertarian">Libertarian</option>
+        <option value="Other">Other</option>
     </select>
-    <label for="state">State:</label>
+    <label2 for="state">State:</label>
 <select id="state">
     <option value="">Don't Care</option>
     <option value="Alabama">Alabama</option>
@@ -85,7 +86,7 @@
 <label for="min-age">Min Age:</label>
 <input type="number" id="min-age" placeholder="Min Age">
 
-<label for="max-age">Max Age:</label>
+<label2 for="max-age">Max Age:</label>
 <input type="number" id="max-age" placeholder="Max Age">
 <label for="former-position">Former Position:</label>
 <select id="former-position">
@@ -94,7 +95,7 @@
     <option value="{{ former_position }}" {% if former_position == former_position %} selected {% endif %}>{{ former_position }}</option>
     {% endfor %}
 </select>
-<label for="current-position">Current Position:</label>
+<label2 for="current-position">Current Position:</label>
 <select id="current-position">
     <option value="" {% if not current_position %} selected {% endif %}>Don't Care</option>
     {% for position in current_positions %}
@@ -109,6 +110,12 @@
     <option value="{{ college }}" {% if college == selected_college %} selected {% endif %}>{{ college }}</option>
     {% endfor %}
 </select>
+<label2 for="donated-democrats">Amount Donated to Democrats:</label2>
+<input type="number" id="donated-democrats" placeholder="Amount Donated" min="0">
+
+<label for="donated-republicans">Amount Donated to Republicans:</label>
+<input type="number" id="donated-republicans" placeholder="Amount Donated" min="0">
+
 
 
 <button id="load-candidates-btn" onclick="loadCandidates()">Load Candidates</button>
@@ -227,6 +234,8 @@ document.getElementById('college').addEventListener('change', updateOptions);
     const currentPosition = document.getElementById('current-position').value;
     const college = document.getElementById('college').value;
 
+    const donatedDemocrats = document.getElementById('donated-democrats').value;
+    const donatedRepublicans = document.getElementById('donated-republicans').value;
     // Construct the query parameters
     let query = {};
     if (party) query.party = party;
@@ -236,6 +245,8 @@ document.getElementById('college').addEventListener('change', updateOptions);
     if (formerPosition) query.former_position = formerPosition;
     if (currentPosition) query.current_position = currentPosition;
     if (college) query.college = college;
+    if (donatedDemocrats) query.donated_democrats = donatedDemocrats;
+    if (donatedRepublicans) query.donated_republicans = donatedRepublicans;
 
     // Redirect the user to the match page with filtered candidates
     const url = new URL('/candidates', window.location.origin);

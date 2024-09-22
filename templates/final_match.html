@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
- 
+    <title>Final Matches</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <!-- Add Firebase SDK via script -->
+    
+</head>
+<body>
     <header>
         <div class="header-container">
             <img src="{{ url_for('static', filename='SmartVote.jpeg') }}" alt="Smart Vote Logo" class="logo">
             <h1>Final Matches!</h1>
         </div>
     </header>
-</head>
-<body>
-    <!-- Check if there are liked candidates -->
+
     <div id="final_matches">
         {% if liked_candidates %}
             <ul>
@@ -32,35 +35,120 @@
         {% else %}
             <p>No final matches yet.</p>
         {% endif %}
-    
     </div>
-    <a href="/"><button>Back to Home</button></a>
 
-   
-    <script>
-        const likedCandidates = JSON.parse('{{ liked_candidates | tojson | safe }}');  // Parse liked candidates
+    <div id="retry_box">
+        <p>Wanna Try Again? Click here:</p>
+        <div class="button-container">
+            <a href="/"><button type="back">Back to Home</button></a>
+        </div>
+    </div>
 
-        // Display liked candidates
-        if (likedCandidates.length > 0) {
-            let finalMatchesHtml = '<ul>';
-            likedCandidates.forEach(candidate => {
-                finalMatchesHtml += `
-                    <li>
-                        <strong>${candidate.Name || "No name available"}</strong><br>
-                        Age: ${candidate.Age || "Unknown"}<br>
-                        Party: ${candidate['Political Party'] || "Unknown"}<br>
-                        State: ${candidate.State || "Unknown"}<br>
-                        Former Position: ${candidate.Former || "Unknown"}<br>
-                        Current Position: ${candidate.Current || "Unknown"}<br>
-                        College: ${candidate.College || "Unknown"}<br>
-                    </li>
-                `;
+    <!-- Sign-in Form -->
+    <form id="signInForm">
+        <h4>Sign In to see what similar users matched with:</h4>
+        <label for="age">Age:</label>
+        <input type="number" id="age" name="age" required><br>
+
+        <label for="gender">Gender:</label>
+        <input type="text" id="gender" name="gender" required><br>
+
+        <label for="race">Race:</label>
+        <input type="text" id="race" name="race" required><br>
+
+        <label for="state">State:</label>
+        <input type="text" id="state" name="state" required><br>
+
+        <label for="political_party">Political Party:</label>
+        <input type="text" id="political_party" name="political_party" required><br>
+
+        <label for="college">College:</label>
+        <input type="text" id="college" name="college" required><br>
+
+        <button type="submit" id="signInButton">Sign In</button>
+    </form>
+
+    <!-- Firebase Handling Script -->
+    <script type="module">
+         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDno1NAXbepejSXyJPBBXahi9_rax9EwcQ",
+        authDomain: "smartvotehq.firebaseapp.com",
+        projectId: "smartvotehq",
+        storageBucket: "smartvotehq.appspot.com",
+        messagingSenderId: "665651812658",
+        appId: "1:665651812658:web:f8444788f1d9e4fd6b1f2b",
+        measurementId: "G-2QVDTC1Y41"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // Test if 'doc()' is properly loaded
+    console.log(doc); // This should log a function definition if correctly imported
+
+    document.addEventListener("DOMContentLoaded", function () {
+    const signInForm = document.getElementById('signInForm');
+    signInForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const age = document.getElementById('age').value;
+        const gender = document.getElementById('gender').value;
+        const race = document.getElementById('race').value;
+        const state = document.getElementById('state').value;
+        const political_party = document.getElementById('political_party').value;
+        const college = document.getElementById('college').value;
+
+        try {
+            console.log("Attempting to sign in...");
+            let user = auth.currentUser;
+
+            if (!user) {
+                const userCredential = await signInAnonymously(auth);
+                user = userCredential.user;
+            }
+
+            // Fetch liked candidates data from server-side
+            const finalMatchData = JSON.parse('{{ liked_candidates | tojson | safe }}');
+
+            // Store user data in Firestore
+            const userDocRef = doc(collection(db, 'users'), user.uid);
+            await setDoc(userDocRef, {
+                age: age,
+                gender: gender,
+                race: race,
+                state: state,
+                political_party: political_party,
+                college: college,
+                finalMatch: finalMatchData,
             });
-            finalMatchesHtml += '</ul>';
-            document.getElementById('final_matches').innerHTML = finalMatchesHtml;
-        } else {
-            document.getElementById('final_matches').innerHTML = `<p>No final matches yet.</p>`;
+
+            // Make an AJAX call to store the UID in the Flask session
+            await fetch('/set_session_uid', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ uid: user.uid })
+            });
+
+            console.log("User is:", auth.currentUser);
+            console.log("User data stored. Redirecting to similar matches..."); 
+            window.location.href = "/similar_matches";
+
+        } catch (error) {
+            console.error("Error during sign-in or data storage:", error.message);
+            console.error(error.stack); // Log the stack trace
+            alert("There was an issue with sign-in or storing data. Check the console for details.");
         }
+    });
+});
+
     </script>
 </body>
 </html>

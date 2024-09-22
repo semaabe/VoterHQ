@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results from Similar Users</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div id="final_matches">
+    <h1>Similar Matches</h1>
+    {% if matches %}
+    <ul>
+        {% for match in matches %}
+            <li>
+                {{ match.age }}, {{ match.gender }}, {{ match.race }}, {{ match.state }}, {{ match.political_party }}, {{ match.college }}
+                <ul>
+                    <li>Matches from this demographic:
+                        <ul>
+                            {% if match.matches %}
+                                {% for finalMatch in match.matches %}
+                                    <li>
+                                        {{ finalMatch.Name }}, {{ finalMatch.Age }}, {{ finalMatch['Political Party'] }}, {{ finalMatch.State }}
+                                    </li>
+                                {% endfor %}
+                            {% else %}
+                                <li>No matches found</li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No similar matches found.</p>
+{% endif %}
+
+    <a href="/"><button>Back to Home</button></a>
+  </div>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+      import { getFirestore, collection, doc, getDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+      import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+    
+      // Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDno1NAXbepejSXyJPBBXahi9_rax9EwcQ",
+        authDomain: "smartvotehq.firebaseapp.com",
+        projectId: "smartvotehq",
+        storageBucket: "smartvotehq.appspot.com",
+        messagingSenderId: "665651812658",
+        appId: "1:665651812658:web:f8444788f1d9e4fd6b1f2b",
+        measurementId: "G-2QVDTC1Y41"
+      };
+    
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+    
+      // Ensure user authentication is detected
+      onAuthStateChanged(auth, user => {
+        if (user) {
+          // Fetch user document from Firestore based on the authenticated user ID
+          const userRef = doc(db, 'users', user.uid);
+          getDoc(userRef).then(doc => {
+            if (doc.exists()) {
+              const userData = doc.data();
+              const userState = userData.state;
+              const userAge = userData.age;
+              const userRace = userData.race;
+    
+              // Query Firestore for similar matches
+              const similarUsersRef = collection(db, 'users');
+    
+              const stateQuery = query(similarUsersRef, where('state', '==', userState));
+              const raceQuery = query(similarUsersRef, where('race', '==', userRace));
+              const ageQuery = query(similarUsersRef, where('age', '==', userAge));
+    
+              Promise.all([
+                getDocs(stateQuery),
+                getDocs(raceQuery),
+                getDocs(ageQuery)
+              ]).then(querySnapshots => {
+                querySnapshots.forEach(snapshot => {
+                  displayMatches(snapshot);
+                });
+              }).catch(error => {
+                console.error("Error fetching similar users:", error);
+              });
+            } else {
+              console.log("No such document for this user!");
+            }
+          }).catch((error) => {
+            console.error("Error getting user document:", error);
+          });
+        }
+      });
+    
+      function displayMatches(querySnapshot) {
+    querySnapshot.forEach(doc => {
+        const similarUser = doc.data();
+        const finalMatch = similarUser.final_match || []; // Ensure this is an array
+
+        const matchList = finalMatch.length > 0
+            ? finalMatch.map(match => `<li>${match.Name}, ${match.Age}, ${match['Political Party']}, ${match.State}</li>`).join('')
+            : "<li>No match found</li>";
+
+        document.getElementById('similarMatchesList').innerHTML += `<li>${similarUser.age}, ${similarUser.gender}, ${similarUser.race}, ${similarUser.state}, ${similarUser.political_party}, ${similarUser.college}
+            <ul>
+                <li>Matches from this demographic:
+                    <ul>${matchList}</ul>
+                </li>
+            </ul>
+        </li>`;
+    });
+}
+
+
+    </script>
+    
+    
+</body>
+</html>
