@@ -7,17 +7,56 @@ body {
 
 h1 {
     text-align: center;
-    color: #2b41bc;
+    color: #2f95ff;
 }
 
 p1{
     text-align: center;
     color: #DD573A;
     font-weight:bold;
-    padding: 20px; 
+    padding: 40px; 
     
 }
 
+h2{
+    text-align: center;
+    color: #2f95ff;
+
+    
+}
+h5{
+    text-align: center;
+    color: #333;
+    font-weight: bold;
+    font-size: large;
+
+    
+}
+p{
+    text-align: center;
+    font-weight:bold;
+
+
+}
+h3{
+    text-align: center;
+    color: #DD573A;
+
+}
+h4{
+    text-align: center;
+    color: #DD573A;
+    font-weight:bold;
+    padding: 40px;
+
+
+}
+.no-more-candidates{
+    text-align: center;
+    font-weight: bold;
+    color: #DD573A;
+
+}
 .header-container {
     display: flex;
     flex-direction: column;
@@ -32,10 +71,30 @@ p1{
 }
 
 form {
-    background: #fff;
+    background:  #F9F6F4;
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-width: 600px;  /* Limit form width */
+    margin: 20px auto;  /* Center form horizontally */
+    text-align: left;  /* Left align the text inside the form */
+}
+form input, form button {
+    width: 100%;  /* Make inputs and buttons full width of the form */
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;  /* Ensure padding doesn’t increase width */
+}
+form button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+form button:hover {
+    background-color: #0056b3;
 }
 
 label {
@@ -54,10 +113,23 @@ select, input[type="number"], input[type="text"] {
     max-width: 500px;  /* Set a maximum width */
     margin: 0 auto;    /* Center the filters horizontally */
     padding: 20px;
-    background-color: #fff;
+    background-color: #F9F6F4;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
+label{
+    font-weight: bold;
+    color: #2f95ff;
+
+
+}
+label2{
+    font-weight: bold;
+    color: #DD573A;
+
+
+}
+
 
 button, a button {
     display: block;
@@ -68,15 +140,18 @@ button, a button {
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    margin-top: 20px;
 }
 
 button:hover, a button:hover {
-    background-color: #0056b3;
+    background-color: #0056b3; 
 }
+
 
 ul {
     list-style: none;
     padding: 0;
+
 }
 
 li {
@@ -106,19 +181,119 @@ li {
     background-color: #f9f9f9;
     width: 300px;
     text-align: center;
+
+}
+.actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px; /* Adds space between buttons */
+/* Reduce the margin between the card and the buttons */
 }
 
-.swiper-button-next, .swiper-button-prev {
-    color: #007bff;
-}
-
-.swiper-button-next:hover, .swiper-button-prev:hover {
-    color: #0056b3;
-}
 
 .logo {
-    width: 150px;
+    width: 250px;
     height: auto;
     margin-top: 10px; /* Optional: Add some space between the title and the logo */
     align-items: center;
+}
+/* Style for the like button */
+#like {
+   
+    bottom: 20px;
+    right: 20px;
+    background-color: #67da67; /* Green background */
+    color: white; /* White text */
+    border: none; /* Remove default border */
+    padding: 10px 20px; /* Padding for the button */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer; /* Change cursor on hover */
+    font-size: 1rem; /* Font size */
+}
+
+/* Change the color on hover */
+#like:hover {
+    background-color: #044d04; /* Darker green on hover */
+}
+
+/* Style for the dislike button */
+#dislike {
+   
+    bottom: 20px;
+    left: 20px;
+    background-color: #FF6961; /* Red background */
+    color: white; /* White text */
+    border: none; /* Remove default border */
+    padding: 10px 20px; /* Padding for the button */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer; /* Change cursor on hover */
+    font-size: 1rem; /* Font size */
+
+}
+
+/* Change the color on hover */
+#dislike:hover {
+    background-color: darkred; /* Darker red on hover */
+}
+#final_matches {
+    padding: 20px; /* Add padding around the container */
+    background-color:  #F9F6F4; /* Light background color */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    max-width: 600px; /* Max width for better readability */
+    margin: 20px auto; /* Center the container */
+}
+
+#final_matches ul {
+    list-style-type: none; /* Remove default list styling */
+    padding: 0; /* Remove default padding */
+}
+
+#final_matches li {
+    padding: 15px; /* Padding for each list item */
+    border-bottom: 1px solid #ddd; /* Divider between items */
+}
+
+#final_matches li:last-child {
+    border-bottom: none; /* Remove border from last item */
+}
+
+#final_matches strong {
+    font-size: 1.2rem; /* Slightly larger font for names */
+    color: #333; /* Dark text for names */
+}
+
+#final_matches p {
+    text-align: center; /* Center the no matches message */
+    color: #777; /* Lighter color for the message */
+    font-style: italic; /* Italic style for emphasis */
+}
+#retry_box {
+    padding: 20px; /* Add padding around the container */
+    background-color:  #F9F6F4; /* Light background color */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    max-width: 600px; /* Max width for better readability */
+    margin: 20px auto; /* Center the container */
+    text-align: center; /* Center text inside the box */
+}
+
+#retry_box p {
+    margin-bottom: 20px; /* Add space between the message and the button */
+}
+
+.button-container {
+    display: flex;
+    justify-content: center; /* Center the button horizontally */
+}
+
+.button-container button {
+    width: auto; /* Let the button size be dynamic */
+    padding: 10px 20px; /* Add padding for a better look */
+}
+.actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px; /* Adds space between buttons */
+    margin-top: 10px; /* Reduce the margin between the card and the buttons */
 }

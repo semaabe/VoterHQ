@@ -78,8 +78,8 @@
 <body>
     <header>
         <div class="header-container">
-            <h1>Your Matches!</h1>
             <img src="{{ url_for('static', filename='SmartVote.jpeg') }}" alt="Smart Vote Logo" class="logo">
+            <h1>Your Matches!</h1>
         </div>
     </header>
 
@@ -93,9 +93,11 @@
         <button id="like">Like</button>
     </div>
     
+    
     <div class="actions">
-        <button id="finish-swiping">Finish Swiping</button>
         <a href="/"><button>Back to Home</button></a>
+        <button id="finish-swiping">Finish Swiping</button>
+  
     </div>
     
 
@@ -120,7 +122,7 @@
             card.classList.add('tinder-card');
             card.innerHTML = `
                 <div>
-                    <h2>${candidate.Name || "No name available"}</h2>
+                    <h5>${candidate.Name || "No name available"}</h5>
                     <p>Age: ${candidate.Age || "Unknown"}</p>
                     <p>Party: ${candidate['Political Party'] || "Unknown"}</p>
                     <p>State: ${candidate.State || "Unknown"}</p>
@@ -163,7 +165,7 @@
             document.getElementById('tinder-container').innerHTML = `
                  <div class="no-candidates-found">
                 <h2>Finding the perfect match is hard!</h2>
-                <h2>Try again to find the candidate right for you!</h2>
+                <h3>Try again to find the candidate right for you!</h3>
             </div>`;
         }
         function chooseFinalMatch(index) {
