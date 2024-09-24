@@ -10,9 +10,11 @@
   <div class="header">
     <img src="{{ url_for('static', filename='SmartVote.jpeg') }}" alt="Smart Vote Logo" class="logo">
     <h1>Similar Matches:</h1>
+  </div>
+
   <div id="similar">
-    {% if matches %}
-    <ul>
+    <ul id="similarMatchesList">
+      {% if matches %}
         {% for match in matches %}
             <li>
                 {{ match.age }}, {{ match.gender }}, {{ match.race }}, {{ match.state }}
@@ -25,21 +27,21 @@
                                         {{ finalMatch.Name }}, {{ finalMatch.Age }}, {{ finalMatch['Political Party'] }}, {{ finalMatch.State }}
                                     </li>
                                 {% endfor %}
-                            {% else %}
-                                <li>No matches found</li>
                             {% endif %}
                         </ul>
                     </li>
                 </ul>
             </li>
         {% endfor %}
+      {% endif %}
     </ul>
-{% else %}
-    <p>No similar matches found.</p>
-{% endif %}
-
+    {% if not matches or matches|length == 0 %}
+        <p>No similar matches found.</p>
+    {% endif %}
+    
     <a href="/"><button>Back to Home</button></a>
   </div>
+  
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
@@ -47,13 +49,13 @@
     
     // Firebase configuration
     const firebaseConfig = {
-    apiKey: "{{ firebase_config['apiKey'] }}",
-    authDomain: "{{ firebase_config['authDomain'] }}",
-    projectId: "{{ firebase_config['projectId'] }}",
-    storageBucket: "{{ firebase_config['storageBucket'] }}",
-    messagingSenderId: "{{ firebase_config['messagingSenderId'] }}",
-    appId: "{{ firebase_config['appId'] }}"
-  };
+      apiKey: "{{ firebase_config['apiKey'] }}",
+      authDomain: "{{ firebase_config['authDomain'] }}",
+      projectId: "{{ firebase_config['projectId'] }}",
+      storageBucket: "{{ firebase_config['storageBucket'] }}",
+      messagingSenderId: "{{ firebase_config['messagingSenderId'] }}",
+      appId: "{{ firebase_config['appId'] }}"
+    };
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
@@ -63,7 +65,6 @@
     // Ensure user authentication is detected
     onAuthStateChanged(auth, user => {
       if (user) {
-        // Fetch user document from Firestore based on authenticated user ID
         const userRef = doc(db, 'users', user.uid);
         getDoc(userRef).then(doc => {
           if (doc.exists()) {
@@ -72,7 +73,7 @@
             const userAge = userData.age;
             const userRace = userData.race;
 
-            // Query Firestore for similar matches combining all conditions
+            // Query Firestore for similar matches
             const similarUsersRef = collection(db, 'users');
             const combinedQuery = query(
               similarUsersRef,
@@ -81,7 +82,6 @@
               where('age', '==', userAge)
             );
 
-            // Get matching users from Firestore
             getDocs(combinedQuery).then(querySnapshot => {
               displayMatches(querySnapshot);
             }).catch(error => {
@@ -97,25 +97,28 @@
       }
     });
 
-    // Function to display the matches on the page
     function displayMatches(querySnapshot) {
   const matchListElement = document.getElementById('similarMatchesList');
   matchListElement.innerHTML = '';  // Clear previous results
 
-  // Create a set to track unique demographic combinations
   const uniqueDemographics = new Set();
+
+  let hasMatches = false; // Flag to check if there are matches
 
   querySnapshot.forEach(doc => {
     const similarUser = doc.data();
-    const finalMatch = similarUser.final_match || []; // Ensure this is an array
+    const finalMatch = similarUser.final_match || []; // Assuming final_match is an array
 
-    // Create a unique key for each user's demographics
+    console.log("Similar User Data:", similarUser); // Log the entire user data
+    console.log("Final Matches:", finalMatch); // Log the final matches array
+
     const demographicsKey = `${similarUser.age}-${similarUser.gender}-${similarUser.race}-${similarUser.state}-${similarUser.political_party}-${similarUser.college}`;
 
-    // Only display if this demographic hasn't been displayed yet
     if (!uniqueDemographics.has(demographicsKey)) {
-      uniqueDemographics.add(demographicsKey);  // Track this demographic
+      uniqueDemographics.add(demographicsKey);
+      hasMatches = true; // Set flag to true if at least one match is found
 
+      // Check if finalMatch array is not empty
       const matchItems = finalMatch.length > 0
         ? finalMatch.map(match => `<li>${match.Name}, ${match.Age}, ${match['Political Party']}, ${match.State}</li>`).join('')
         : "<li>No matches found</li>";
@@ -130,7 +133,14 @@
         </li>`;
     }
   });
+
+  // If no unique demographics were found, show a message
+  if (!hasMatches) {
+    matchListElement.innerHTML = "<li>No matches found</li>";
+  }
 }
+
+
   </script>
 </body>
 </html>

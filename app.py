@@ -12,6 +12,22 @@ app = Flask(__name__)
 app.secret_key = b'\x16T\xbet\x08\xae\x13y\xea\x04\xc8\xbc\xe3\xd4\x81\x0b\x15R\xaeT\xcb\x07\x07\xea'
 # Define the file path at the start
 load_dotenv()
+# Load the JSON from an environment variable
+cred = credentials.Certificate({
+    "type": os.environ["FIREBASE_TYPE"],
+    "project_id": os.environ["FIREBASE_PROJECT_ID"],
+    "private_key_id": os.environ["FIREBASE_PRIVATE_KEY_ID"],
+    "private_key": os.environ["FIREBASE_PRIVATE_KEY"].replace('\\n', '\n'),
+    "client_email": os.environ["FIREBASE_CLIENT_EMAIL"],
+    "client_id": os.environ["FIREBASE_CLIENT_ID"],
+    "auth_uri": os.environ["FIREBASE_AUTH_URI"],
+    "token_uri": os.environ["FIREBASE_TOKEN_URI"],
+    "auth_provider_x509_cert_url": os.environ["FIREBASE_AUTH_PROVIDER_CERT_URL"],
+    "client_x509_cert_url": os.environ["FIREBASE_CLIENT_CERT_URL"]
+})
+firebase_admin.initialize_app(cred)
+
+db = firestore.client()
 
 FIREBASE_CONFIG = {
     'apiKey': os.getenv('FIREBASE_API_KEY'),
@@ -22,7 +38,7 @@ FIREBASE_CONFIG = {
     'appId': os.getenv('FIREBASE_APP_ID'),
     'measurementId': os.getenv('FIREBASE_MEASUREMENT_ID')
 }
-file_path = 'Political Data.xlsx'
+file_path = 'PoliticalData.xlsx'
 
 def load_candidates(file_path):
     """Loads candidates data from an Excel file."""
@@ -198,9 +214,10 @@ def final_match():
         firebase_config=FIREBASE_CONFIG
     )
 
-cred = credentials.Certificate("smartvote.json")
-firebase_admin.initialize_app(cred)
-db = firestore.client()
+
+# firebase_admin.initialize_app(cred)
+
+
 
 @app.route('/store_user_data', methods=['POST'])
 def store_user_data():

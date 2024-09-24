@@ -19,6 +19,6 @@ __pycache__/
 
 # Ignore sensitive files
 smartvote.json
-vercel.json
+
 
 
