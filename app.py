@@ -58,16 +58,9 @@ def load_candidates(file_path):
 
 
 @app.route('/')
-def landing_page():
-    return render_template('landing_page.html')
-
-@app.route('/index')
-def index():
+def home():
     return render_template('index.html')
 
-@app.route('/get-started')
-def get_started():
-    return redirect(url_for('index'))
 
 @app.route('/candidates', methods=['GET'])
 def match():
