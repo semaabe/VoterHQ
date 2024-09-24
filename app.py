@@ -38,12 +38,12 @@ FIREBASE_CONFIG = {
     'appId': os.getenv('FIREBASE_APP_ID'),
     'measurementId': os.getenv('FIREBASE_MEASUREMENT_ID')
 }
-file_path = 'PoliticalData.xlsx'
+file_path = 'PoliticalData.csv'
 
 def load_candidates(file_path):
     """Loads candidates data from an Excel file."""
     try:
-        df = pd.read_excel(file_path)
+        df = pd.read_csv(file_path)
         df["To Democrats"] = pd.to_numeric(df["To Democrats"], errors='coerce').fillna(0)
         df["To Republicans"] = pd.to_numeric(df["To Republicans"], errors='coerce').fillna(0)
 

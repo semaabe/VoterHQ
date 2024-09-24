@@ -36,7 +36,7 @@
       {% endif %}
     </ul>
     {% if not matches or matches|length == 0 %}
-        <p>No similar matches found.</p>
+        <p>No more similar matches found.</p>
     {% endif %}
     
     <a href="/"><button>Back to Home</button></a>
@@ -136,7 +136,7 @@
 
   // If no unique demographics were found, show a message
   if (!hasMatches) {
-    matchListElement.innerHTML = "<li>No matches found</li>";
+    matchListElement.innerHTML = "<li>No more matches found</li>";
   }
 }
 
