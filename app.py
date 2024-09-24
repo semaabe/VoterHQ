@@ -3,15 +3,25 @@ import pandas as pd
 import numpy as np  # Import numpy to handle NaN values
 import json
 import os
-from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, firestore
+from dotenv import load_dotenv
 
 
 app = Flask(__name__)
 app.secret_key = b'\x16T\xbet\x08\xae\x13y\xea\x04\xc8\xbc\xe3\xd4\x81\x0b\x15R\xaeT\xcb\x07\x07\xea'
 # Define the file path at the start
+load_dotenv()
 
+FIREBASE_CONFIG = {
+    'apiKey': os.getenv('FIREBASE_API_KEY'),
+    'authDomain': os.getenv('FIREBASE_AUTH_DOMAIN'),
+    'projectId': os.getenv('FIREBASE_PROJECT_ID'),
+    'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET'),
+    'messagingSenderId': os.getenv('FIREBASE_MESSAGING_SENDER_ID'),
+    'appId': os.getenv('FIREBASE_APP_ID'),
+    'measurementId': os.getenv('FIREBASE_MEASUREMENT_ID')
+}
 file_path = 'Political Data.xlsx'
 
 def load_candidates(file_path):
@@ -32,10 +42,16 @@ def load_candidates(file_path):
 
 
 @app.route('/')
+def landing_page():
+    return render_template('landing_page.html')
+
+@app.route('/index')
 def index():
     return render_template('index.html')
 
-
+@app.route('/get-started')
+def get_started():
+    return redirect(url_for('index'))
 
 @app.route('/candidates', methods=['GET'])
 def match():
@@ -43,8 +59,13 @@ def match():
     
     if candidates_df is None:
         return jsonify({"error": "Failed to load candidates data"}), 500
-
-
+    
+    donated_democrats = request.args.get('donated_democrats', 0)
+    donated_republicans = request.args.get('donated_republicans', 0)
+    
+    # Store donation information in the session
+    session['donated_democrats'] = donated_democrats
+    session['donated_republicans'] = donated_republicans
 
     # Get filter parameters from request
     selected_party = request.args.get('party')
@@ -70,16 +91,13 @@ def match():
         candidates_df = candidates_df[candidates_df['Current'] == current_position]
     if selected_college:
         candidates_df = candidates_df[candidates_df['College'] == selected_college]
-    if donated_democrats:
-        candidates_df = candidates_df[candidates_df['To Democrats'] >= float(donated_democrats)]
-    if donated_republicans:
-        candidates_df = candidates_df[candidates_df['To Republicans'] >= float(donated_republicans)]
-    
+   
     # Convert to dictionary
     available_positions = candidates_df['Current'].dropna().unique().tolist()
     
     candidates = candidates_df.to_dict(orient='records')
     return render_template('match.html', candidates=candidates if candidates else [], available_positions=available_positions)
+
 @app.route('/update_options', methods=['GET'])
 def update_options_route():
     candidates_df = load_candidates(file_path)
@@ -152,14 +170,33 @@ def get_unique_values(candidates, column_name):
 def final_match():
     # Retrieve liked candidates from the query parameters
     liked_candidates_json = request.args.get('liked_candidates')
-    
+    donated_democrats = request.args.get('donated_democrats', 0)
+    donated_republicans = request.args.get('donated_republicans', 0)
+
     if liked_candidates_json:
         liked_candidates = json.loads(liked_candidates_json)  # Parse the JSON string to Python list
     else:
         liked_candidates = []
 
-    # Render the final matches page with the liked candidates
-    return render_template('final_match.html', liked_candidates=liked_candidates)
+    # Firebase configuration (assuming you've loaded it via dotenv)
+    FIREBASE_CONFIG = {
+        'apiKey': os.getenv('FIREBASE_API_KEY'),
+        'authDomain': os.getenv('FIREBASE_AUTH_DOMAIN'),
+        'projectId': os.getenv('FIREBASE_PROJECT_ID'),
+        'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET'),
+        'messagingSenderId': os.getenv('FIREBASE_MESSAGING_SENDER_ID'),
+        'appId': os.getenv('FIREBASE_APP_ID'),
+        'measurementId': os.getenv('FIREBASE_MEASUREMENT_ID')
+    }
+
+    # Render the final matches page with the liked candidates and firebase config
+    return render_template(
+        'final_match.html',
+        liked_candidates=json.loads(liked_candidates_json) if liked_candidates_json else [],
+        donated_democrats=donated_democrats,
+        donated_republicans=donated_republicans,
+        firebase_config=FIREBASE_CONFIG
+    )
 
 cred = credentials.Certificate("smartvote.json")
 firebase_admin.initialize_app(cred)
@@ -173,22 +210,25 @@ def store_user_data():
     gender = user_data['gender']
     race = user_data['race']
     state = user_data['state']
-    political_party=user_data['political_party']
-    college = user_data['college']
     final_match = user_data['final_match']
-    
+
+    # Retrieve donation information from session (from filter page)
+    donated_democrats = session.get('donated_democrats', 0)
+    donated_republicans = session.get('donated_republicans', 0)
+
     doc_ref = db.collection('users').document(uid)
     doc_ref.set({
         'age': age,
-        'gender':gender,
-        'race':race,
+        'gender': gender,
+        'race': race,
         'state': state,
-        'political_party':political_party,
-        'college': college,
-        'final_match': final_match
-        })
-
+        'final_match': final_match,
+        'donated_democrats': donated_democrats,  # Store donation information
+        'donated_republicans': donated_republicans  # Store donation information
+    })
+    
     return jsonify({"status": "success"})
+
 
 @app.route('/similar_matches')
 def similar_matches():
@@ -197,19 +237,28 @@ def similar_matches():
     if not uid:
         return redirect(url_for('index'))
 
-    user_ref = db.collection('users').document(uid)
-    user_doc = user_ref.get()
+    try:
+        user_ref = db.collection('users').document(uid)
+        user_doc = user_ref.get()
 
-    if not user_doc.exists:
-        return jsonify({"error": "User data not found"}), 404
+        # Check if user_doc exists
+        if not user_doc.exists:
+            print(f"User document not found for UID: {uid}")
+            return jsonify({"error": "User not found"}), 404
 
-    user_data = user_doc.to_dict()
+        user_data = user_doc.to_dict()
+    except Exception as e:
+        print("Error fetching user data:", e)
+        return jsonify({"error": "Failed to retrieve user data"}), 500
+
+    # Debug user_data
+    print(f"User data retrieved: {user_data}")
 
     # Query for similar users using keyword arguments
     query_ref = db.collection('users') \
-        .where('race', '==', user_data['race']) \
-        .where('state', '==', user_data['state']) \
-        .where('college', '==', user_data['college'])
+        .where(field_path='race', op_string='==',value=user_data.get('race')) \
+        .where(field_path='state', op_string='==', value=user_data.get('state')) \
+        .where(field_path='college', op_string='==', value=user_data.get('college'))
 
     similar_users = query_ref.stream()
 
@@ -222,15 +271,26 @@ def similar_matches():
             'gender': similar_data['gender'],
             'race': similar_data['race'],
             'state': similar_data['state'],
-            'political_party': similar_data['political_party'],
-            'college': similar_data['college'],
             'matches': matches  # Store matches here
         })
 
-    if not similar_matches:
-        return render_template('similar_matches.html', matches=[], message="No matches found for similar demographics.")
+    # Firebase configuration (assuming you've loaded it via dotenv)
+    FIREBASE_CONFIG = {
+        'apiKey': os.getenv('FIREBASE_API_KEY'),
+        'authDomain': os.getenv('FIREBASE_AUTH_DOMAIN'),
+        'projectId': os.getenv('FIREBASE_PROJECT_ID'),
+        'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET'),
+        'messagingSenderId': os.getenv('FIREBASE_MESSAGING_SENDER_ID'),
+        'appId': os.getenv('FIREBASE_APP_ID'),
+        'measurementId': os.getenv('FIREBASE_MEASUREMENT_ID')
+    }
 
-    return render_template('similar_matches.html', matches=similar_matches)
+    print(f"Similar matches found: {similar_matches}")
+    return render_template(
+        'similar_matches.html',
+        matches=similar_matches,
+        firebase_config=FIREBASE_CONFIG
+    )
 
 @app.route('/set_session_uid', methods=['POST'])
 def set_session_uid():

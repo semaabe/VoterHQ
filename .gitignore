@@ -16,5 +16,10 @@ __pycache__/
 # Vercel cache (if applicable)
 .vercel/
 
+# Ignore sensitive files
 smartvote.json
+vercel.json
+Political Data.xlsx
+
+# Ignore any new repositories
 

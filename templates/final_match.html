@@ -11,7 +11,7 @@
 </head>
 <body>
     <header>
-        <div class="header-container">
+        <div class="header">
             <img src="{{ url_for('static', filename='SmartVote.jpeg') }}" alt="Smart Vote Logo" class="logo">
             <h1>Final Matches!</h1>
         </div>
@@ -40,7 +40,7 @@
     <div id="retry_box">
         <p>Wanna Try Again? Click here:</p>
         <div class="button-container">
-            <a href="/"><button type="back">Back to Home</button></a>
+            <a href="/index"><button type="back">Back to Filters</button></a>
         </div>
     </div>
 
@@ -59,97 +59,124 @@
         <label for="state">State:</label>
         <input type="text" id="state" name="state" required><br>
 
-        <label for="political_party">Political Party:</label>
-        <input type="text" id="political_party" name="political_party" required><br>
 
-        <label for="college">College:</label>
-        <input type="text" id="college" name="college" required><br>
+
+        <!-- Add these hidden fields inside your form -->
+        <input type="hidden" id="donated_democrats" name="donated_democrats">
+        <input type="hidden" id="donated_republicans" name="donated_republicans">
+
+
 
         <button type="submit" id="signInButton">Sign In</button>
     </form>
 
     <!-- Firebase Handling Script -->
     <script type="module">
-         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyDno1NAXbepejSXyJPBBXahi9_rax9EwcQ",
-        authDomain: "smartvotehq.firebaseapp.com",
-        projectId: "smartvotehq",
-        storageBucket: "smartvotehq.appspot.com",
-        messagingSenderId: "665651812658",
-        appId: "1:665651812658:web:f8444788f1d9e4fd6b1f2b",
-        measurementId: "G-2QVDTC1Y41"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-
-    // Test if 'doc()' is properly loaded
-    console.log(doc); // This should log a function definition if correctly imported
-
-    document.addEventListener("DOMContentLoaded", function () {
-    const signInForm = document.getElementById('signInForm');
-    signInForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
-        const age = document.getElementById('age').value;
-        const gender = document.getElementById('gender').value;
-        const race = document.getElementById('race').value;
-        const state = document.getElementById('state').value;
-        const political_party = document.getElementById('political_party').value;
-        const college = document.getElementById('college').value;
-
-        try {
-            console.log("Attempting to sign in...");
-            let user = auth.currentUser;
-
-            if (!user) {
-                const userCredential = await signInAnonymously(auth);
-                user = userCredential.user;
-            }
-
-            // Fetch liked candidates data from server-side
-            const finalMatchData = JSON.parse('{{ liked_candidates | tojson | safe }}');
-
-            // Store user data in Firestore
-            const userDocRef = doc(collection(db, 'users'), user.uid);
-            await setDoc(userDocRef, {
-                age: age,
-                gender: gender,
-                race: race,
-                state: state,
-                political_party: political_party,
-                college: college,
-                finalMatch: finalMatchData,
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+    
+        const firebaseConfig = {
+            apiKey: "{{ firebase_config['apiKey'] }}",
+            authDomain: "{{ firebase_config['authDomain'] }}",
+            projectId: "{{ firebase_config['projectId'] }}",
+            storageBucket: "{{ firebase_config['storageBucket'] }}",
+            messagingSenderId: "{{ firebase_config['messagingSenderId'] }}",
+            appId: "{{ firebase_config['appId'] }}"
+        };
+    
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+    
+        document.addEventListener("DOMContentLoaded", function () {
+            // Populate the hidden donation fields with values from the backend
+            document.getElementById('donated_democrats').value = "{{ donated_democrats }}";
+            document.getElementById('donated_republicans').value = "{{ donated_republicans }}";
+    
+            const signInForm = document.getElementById('signInForm');
+            signInForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+    
+                const age = document.getElementById('age').value;
+                const gender = document.getElementById('gender').value;
+                const race = document.getElementById('race').value;
+                const state = document.getElementById('state').value;
+                const donatedDemocratsElement = document.getElementById('donated_democrats');
+                const donatedRepublicansElement = document.getElementById('donated_republicans');
+    
+                // Safely check if these elements exist
+                const donated_democrats = donatedDemocratsElement ? donatedDemocratsElement.value || 0 : 0;
+                const donated_republicans = donatedRepublicansElement ? donatedRepublicansElement.value || 0 : 0;
+    
+                try {
+                    console.log("Attempting to sign in...");
+                    let user = auth.currentUser;
+    
+                    if (!user) {
+                        const userCredential = await signInAnonymously(auth);
+                        user = userCredential.user;
+                    }
+    
+                    // Fetch liked candidates data from server-side
+                    const finalMatchData = JSON.parse('{{ liked_candidates | tojson | safe }}');
+    
+                    // Store user data in Firestore
+                    const userDocRef = doc(collection(db, 'users'), user.uid);
+                    await setDoc(userDocRef, {
+                        age: age,
+                        gender: gender,
+                        race: race,
+                        state: state,
+                        finalMatch: finalMatchData,
+                        donated_democrats: donated_democrats,  // Include donation info
+                        donated_republicans: donated_republicans  // Include donation info
+                    });
+    
+                    // Create user data object to send to backend
+                    const userData = {
+                        uid: user.uid,
+                        age: age,
+                        gender: gender,
+                        race: race,
+                        state: state,
+                        final_match: finalMatchData,
+                        donated_democrats: donated_democrats,
+                        donated_republicans: donated_republicans
+                    };
+    
+                    // Send user data to backend
+                    await fetch('/store_user_data', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(userData)
+                    });
+    
+                    // Make an AJAX call to store the UID in the Flask session
+                    await fetch('/set_session_uid', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ uid: user.uid })
+                    });
+    
+                    console.log("User is:", auth.currentUser);
+                    console.log("User data stored. Redirecting to similar matches...");
+                    window.location.href = "/similar_matches";
+    
+                } catch (error) {
+                    console.error("Error during sign-in or data storage:", error.message);
+                    console.error(error.stack); // Log the stack trace
+                    alert("There was an issue with sign-in or storing data. Check the console for details.");
+                }
             });
-
-            // Make an AJAX call to store the UID in the Flask session
-            await fetch('/set_session_uid', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ uid: user.uid })
-            });
-
-            console.log("User is:", auth.currentUser);
-            console.log("User data stored. Redirecting to similar matches..."); 
-            window.location.href = "/similar_matches";
-
-        } catch (error) {
-            console.error("Error during sign-in or data storage:", error.message);
-            console.error(error.stack); // Log the stack trace
-            alert("There was an issue with sign-in or storing data. Check the console for details.");
-        }
-    });
-});
-
+        });
     </script>
+    
 </body>
 </html>
 
