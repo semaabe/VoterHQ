@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Results from Similar Users</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D7LTM4PRZY"></script> 
+    <script>   window.dataLayer = window.dataLayer || []; 
+    function gtag(){dataLayer.push(arguments);}   
+    gtag('js', new Date());  
+    gtag('config', 'G-D7LTM4PRZY'); 
+    </script> 
 </head>
 <body>
   <div class="header">
@@ -41,6 +47,7 @@
     
     <a href="/"><button>Back to Home</button></a>
   </div>
+
   
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";

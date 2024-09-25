@@ -5,6 +5,10 @@
 __pycache__/
 *.py[cod]
 
+*.pyc
+*.pyo
+*.pyd
+
 # Local configuration files
 *.env
 .vscode/

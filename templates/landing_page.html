@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Political Candidate Finder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D7LTM4PRZY"></script> 
+    <script>window.dataLayer = window.dataLayer || []; 
+    function gtag(){dataLayer.push(arguments);}   
+    gtag('js', new Date());  
+    gtag('config', 'G-D7LTM4PRZY'); 
+    </script> 
+</head>
+<body>
+    <div class="header-container">
+        <img src="{{ url_for('static', filename='SmartVote.jpeg') }}" alt="Website Logo" class="logo">
+        <div class="scroll-indicator">
+            <a href="#hero" class="scroll-link">↓</a>
+        </div>
+    </div>
+    <section id="hero">
+        <div class="hero-content">
+            <h1>Find Your Political Match</h1>
+            <p8>Discover the political candidates that align with your views in just a few swipes.</p8>
+            <a href="/index" class="cta-button">Get Started</a>
+        </div>
+        <div class="hero-image"></div>
+    </section>
+</body>
+</html>
+
